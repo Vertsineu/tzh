@@ -214,6 +214,8 @@ async fn main() -> Result<()> {
                     println!("{}", translation.bright_white());
                 };
 
+                println!("{}", "Translating...".blue());
+
                 // Translate the input
                 let result = if has_blank(text) {
                     translator

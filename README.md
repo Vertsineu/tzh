@@ -39,6 +39,12 @@ cat input.txt | tzh t -s
 cat input.txt | tzh t -p
 ```
 
+- translate in interactive mode
+
+```bash
+tzh i
+```
+
 - help to see usage of other options
 
 ```bash

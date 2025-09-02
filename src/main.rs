@@ -59,6 +59,10 @@ enum Commands {
     Status,
 }
 
+fn has_blank(text: &str) -> bool {
+    text.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -90,24 +94,20 @@ async fn main() -> Result<()> {
                 return Ok(());
             }
 
-            // Split input text into lines if streaming
-            let lines: Vec<&str> = if stream {
-                input_text
-                    .lines()
-                    .map(|line| line.trim())
-                    .collect()
-            } else {
-                vec![input_text.trim()]
-            };
+            if !plain {
+                println!("{}", "Translating...".blue());
+            }
 
+            // Create callback for translation results
             let callback = |original: &str, translation: &str| {
+                if translation.is_empty() {
+                    println!(); // Empty line
+                    return;
+                }
+
                 if plain {
                     // Plain mode: just output the translation
-                    if !translation.is_empty() {
-                        println!("{}", translation);
-                    } else {
-                        println!(); // Empty line
-                    }
+                    println!("{}", translation);
                 } else {
                     println!(); // Add separator between lines
                     println!("{}", "Original:".green().bold());
@@ -117,19 +117,40 @@ async fn main() -> Result<()> {
                 }
             };
 
-            if !plain {
-                println!("{}", "Translating...".blue());
-            }
+            // Check whether is a word or phrase
+            if has_blank(&input_text) {
+                // Split input text into lines if streaming
+                let lines: Vec<&str> = if stream {
+                    input_text.lines().map(|line| line.trim()).collect()
+                } else {
+                    vec![input_text.trim()]
+                };
 
-            // Translation call
-            match translator
-                .translate(lines, &to, from.as_deref(), callback)
-                .await 
-            {
-                Ok(()) => { /* Nothing to do, because callback has done everything */ }
-                Err(e) => {
-                    eprintln!("Translation failed: {}", e);
-                    std::process::exit(1);
+                for line in lines {
+                    // Translate each line
+                    match translator
+                        .translate_line(line, &to, from.as_deref(), &callback)
+                        .await
+                    {
+                        Ok(()) => { /* Nothing to do, because callback has done everything */ }
+                        Err(e) => {
+                            eprintln!("Translation failed: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            } else {
+                // Translate single word
+                match translator
+                    .translate_word(&input_text, &to, from.as_deref(), callback)
+                    .await
+                {
+                    Ok(()) => { /* Nothing to do, because callback has done everything */
+                    }
+                    Err(e) => {
+                        eprintln!("Translation failed: {}", e);
+                        std::process::exit(1);
+                    }
                 }
             }
         }

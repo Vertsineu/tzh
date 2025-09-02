@@ -2,6 +2,12 @@
 name = "tzh"
 version = "0.1.0"
 edition = "2024"
+authors = ["Vertsineu"]
+license = "MIT"
+description = "AI-powered translation tool supporting multiple languages and streaming output"
+repository = "https://github.com/Vertsineu/tzh"
+keywords = ["translation", "ai", "cli", "i18n", "localization"]
+categories = ["command-line-utilities", "internationalization"]
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }

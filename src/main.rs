@@ -82,13 +82,13 @@ async fn main() -> Result<()> {
                 if plain {
                     eprintln!("No text provided to translate");
                 } else {
-                    eprintln!("{} No text provided to translate", "❌".red());
+                    eprintln!("{}", "No text provided to translate".red());
                 }
                 return Ok(());
             }
 
             if !plain {
-                println!("{}", "🔄 Translating...".blue());
+                println!("{}", "Translating...".blue());
             }
 
             match translator
@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
                         // In plain mode, just exit with error code
                         std::process::exit(1);
                     } else {
-                        eprintln!("{} {}", "❌ Translation failed:".red(), e);
+                        eprintln!("{} {}", "Translation failed:".red(), e);
                     }
                 }
             }
@@ -125,22 +125,22 @@ async fn main() -> Result<()> {
         } => {
             if let Some(endpoint) = endpoint {
                 config.set_endpoint(&endpoint);
-                println!("{} Endpoint set to: {}", "✅".green(), endpoint);
+                println!("{} {}", "Endpoint set to:".green(), endpoint);
             }
 
             if let Some(api_key) = api_key {
                 config.set_api_key(&api_key);
-                println!("{} API key updated", "✅".green());
+                println!("{}", "API key updated".green());
             }
 
             if let Some(model) = model {
                 config.set_model(&model);
-                println!("{} Model set to: {}", "✅".green(), model);
+                println!("{} {}", "Model set to:".green(), model);
             }
 
             if local {
                 config.set_local_mode(true);
-                println!("{} Local mode enabled", "✅".green());
+                println!("{}", "Local mode enabled".green());
             }
 
             config.save()?;

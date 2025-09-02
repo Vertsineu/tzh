@@ -30,6 +30,9 @@ enum Commands {
         /// Source language (auto-detect if not specified)
         #[arg(short, long)]
         from: Option<String>,
+        /// Plain output (only show translation result, no formatting)
+        #[arg(short, long)]
+        plain: bool,
     },
     /// Configure the translator
     Config {
@@ -56,7 +59,12 @@ async fn main() -> Result<()> {
     let mut config = Config::load()?;
 
     match cli.command {
-        Commands::Translate { text, to, from } => {
+        Commands::Translate {
+            text,
+            to,
+            from,
+            plain,
+        } => {
             let translator = Translator::new(&config);
 
             // Get the text to translate either from arguments or stdin
@@ -71,24 +79,41 @@ async fn main() -> Result<()> {
             };
 
             if input_text.is_empty() {
-                eprintln!("{} No text provided to translate", "❌".red());
+                if plain {
+                    eprintln!("No text provided to translate");
+                } else {
+                    eprintln!("{} No text provided to translate", "❌".red());
+                }
                 return Ok(());
             }
 
-            println!("{}", "🔄 Translating...".blue());
+            if !plain {
+                println!("{}", "🔄 Translating...".blue());
+            }
 
             match translator
                 .translate(&input_text, &to, from.as_deref())
                 .await
             {
                 Ok(result) => {
-                    println!("\n{}", "Original:".green().bold());
-                    println!("{}", input_text);
-                    println!("\n{}", format!("Translation ({}):", to).green().bold());
-                    println!("{}", result.bright_white());
+                    if plain {
+                        // Plain output: only show the translation result
+                        println!("{}", result);
+                    } else {
+                        // Formatted output: show original and translation with colors
+                        println!("\n{}", "Original:".green().bold());
+                        println!("{}", input_text);
+                        println!("\n{}", format!("Translation ({}):", to).green().bold());
+                        println!("{}", result.bright_white());
+                    }
                 }
                 Err(e) => {
-                    eprintln!("{} {}", "❌ Translation failed:".red(), e);
+                    if plain {
+                        // In plain mode, just exit with error code
+                        std::process::exit(1);
+                    } else {
+                        eprintln!("{} {}", "❌ Translation failed:".red(), e);
+                    }
                 }
             }
         }

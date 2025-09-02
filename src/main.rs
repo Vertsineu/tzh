@@ -39,15 +39,12 @@ enum Commands {
         /// Set API endpoint
         #[arg(long)]
         endpoint: Option<String>,
-        /// Set API key
-        #[arg(long)]
-        api_key: Option<String>,
         /// Set model name
         #[arg(long)]
         model: Option<String>,
-        /// Use local model
+        /// Set API key
         #[arg(long)]
-        local: bool,
+        api_key: Option<String>,
     },
     /// Show current configuration
     Status,
@@ -121,16 +118,10 @@ async fn main() -> Result<()> {
             endpoint,
             api_key,
             model,
-            local,
         } => {
             if let Some(endpoint) = endpoint {
                 config.set_endpoint(&endpoint);
                 println!("{} {}", "Endpoint set to:".green(), endpoint);
-            }
-
-            if let Some(api_key) = api_key {
-                config.set_api_key(&api_key);
-                println!("{}", "API key updated".green());
             }
 
             if let Some(model) = model {
@@ -138,9 +129,9 @@ async fn main() -> Result<()> {
                 println!("{} {}", "Model set to:".green(), model);
             }
 
-            if local {
-                config.set_local_mode(true);
-                println!("{}", "Local mode enabled".green());
+            if let Some(api_key) = api_key {
+                config.set_api_key(&api_key);
+                println!("{}", "API key updated".green());
             }
 
             config.save()?;
@@ -149,14 +140,6 @@ async fn main() -> Result<()> {
             println!("{}", "Current Configuration:".blue().bold());
             println!("Endpoint: {}", config.endpoint());
             println!("Model: {}", config.model());
-            println!(
-                "Local mode: {}",
-                if config.is_local() {
-                    "Yes".green()
-                } else {
-                    "No".red()
-                }
-            );
             println!(
                 "API key: {}",
                 if config.has_api_key() {

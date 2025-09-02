@@ -8,7 +8,6 @@ pub struct Config {
     pub endpoint: String,
     pub api_key: Option<String>,
     pub model: String,
-    pub local_mode: bool,
     pub timeout: u64,
 }
 
@@ -18,7 +17,6 @@ impl Default for Config {
             endpoint: "https://api.deepseek.com/v1".to_string(),
             api_key: None,
             model: "deepseek-chat".to_string(),
-            local_mode: false,
             timeout: 30,
         }
     }
@@ -72,10 +70,6 @@ impl Config {
         &self.model
     }
 
-    pub fn is_local(&self) -> bool {
-        self.local_mode
-    }
-
     pub fn timeout(&self) -> u64 {
         self.timeout
     }
@@ -95,19 +89,5 @@ impl Config {
 
     pub fn set_model(&mut self, model: &str) {
         self.model = model.to_string();
-    }
-
-    pub fn set_local_mode(&mut self, local: bool) {
-        self.local_mode = local;
-        if local {
-            // Set default local endpoint if switching to local mode
-            if self.endpoint == "https://api.deepseek.com/v1" {
-                self.endpoint = "http://127.0.0.1:1234/v1".to_string();
-            }
-            // Set default local model if needed
-            if self.model == "deepseek-chat" {
-                self.model = "local-model".to_string();
-            }
-        }
     }
 }

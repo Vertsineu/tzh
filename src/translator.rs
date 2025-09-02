@@ -199,7 +199,6 @@ impl Clone for Config {
             endpoint: self.endpoint.clone(),
             api_key: self.api_key.clone(),
             model: self.model.clone(),
-            local_mode: self.local_mode,
             timeout: self.timeout,
         }
     }

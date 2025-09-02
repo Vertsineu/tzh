@@ -1,1 +1,49 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Config files (don't commit sensitive data)
+config.toml
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build artifacts
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# AI model files (usually large)
+*.bin
+*.gguf
+*.safetensors
+models/
+
+# Backup files
+*.bak
+*.backup

@@ -9,6 +9,19 @@ pub struct Config {
     pub api_key: Option<String>,
     pub model: String,
     pub timeout: u64,
+    pub temperature: f32,
+    pub max_tokens: Option<i32>,
+}
+
+// Partial config struct for loading from file with missing fields
+#[derive(Debug, Deserialize)]
+struct PartialConfig {
+    endpoint: Option<String>,
+    api_key: Option<String>,
+    model: Option<String>,
+    timeout: Option<u64>,
+    temperature: Option<f32>,
+    max_tokens: Option<Option<i32>>,
 }
 
 impl Default for Config {
@@ -18,6 +31,8 @@ impl Default for Config {
             api_key: None,
             model: "deepseek-chat".to_string(),
             timeout: 30,
+            temperature: 1.3,
+            max_tokens: Some(2000),
         }
     }
 }
@@ -28,7 +43,23 @@ impl Config {
 
         if config_path.exists() {
             let content = fs::read_to_string(&config_path).context("Failed to read config file")?;
-            let config: Config = toml::from_str(&content).context("Failed to parse config file")?;
+
+            // Try to parse as partial config first, then merge with defaults
+            let partial: PartialConfig =
+                toml::from_str(&content).context("Failed to parse config file")?;
+
+            let default = Config::default();
+            let config = Config {
+                endpoint: partial.endpoint.unwrap_or(default.endpoint),
+                api_key: partial.api_key.or(default.api_key),
+                model: partial.model.unwrap_or(default.model),
+                timeout: partial.timeout.unwrap_or(default.timeout),
+                temperature: partial.temperature.unwrap_or(default.temperature),
+                max_tokens: partial.max_tokens.unwrap_or(default.max_tokens),
+            };
+
+            // Save the merged config to ensure all fields are present in the file
+            config.save()?;
             Ok(config)
         } else {
             // Create default config
@@ -74,6 +105,14 @@ impl Config {
         self.timeout
     }
 
+    pub fn temperature(&self) -> f32 {
+        self.temperature
+    }
+
+    pub fn max_tokens(&self) -> Option<i32> {
+        self.max_tokens
+    }
+
     pub fn has_api_key(&self) -> bool {
         self.api_key.is_some() && !self.api_key.as_ref().unwrap().is_empty()
     }
@@ -89,5 +128,13 @@ impl Config {
 
     pub fn set_model(&mut self, model: &str) {
         self.model = model.to_string();
+    }
+
+    pub fn set_temperature(&mut self, temperature: f32) {
+        self.temperature = temperature;
+    }
+
+    pub fn set_max_tokens(&mut self, max_tokens: Option<i32>) {
+        self.max_tokens = max_tokens;
     }
 }

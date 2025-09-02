@@ -94,8 +94,8 @@ impl Translator {
         let request = ChatRequest {
             model: self.config.model().to_string(),
             messages,
-            temperature: 0.1,
-            max_tokens: Some(2000),
+            temperature: self.config.temperature(),
+            max_tokens: self.config.max_tokens(),
         };
 
         let url = format!("{}/chat/completions", self.config.endpoint());
@@ -200,6 +200,8 @@ impl Clone for Config {
             api_key: self.api_key.clone(),
             model: self.model.clone(),
             timeout: self.timeout,
+            temperature: self.temperature,
+            max_tokens: self.max_tokens,
         }
     }
 }

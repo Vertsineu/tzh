@@ -45,6 +45,12 @@ enum Commands {
         /// Set API key
         #[arg(long)]
         api_key: Option<String>,
+        /// Set temperature (0.0 to 2.0)
+        #[arg(long)]
+        temperature: Option<f32>,
+        /// Set max tokens (None for unlimited)
+        #[arg(long)]
+        max_tokens: Option<i32>,
     },
     /// Show current configuration
     Status,
@@ -76,11 +82,7 @@ async fn main() -> Result<()> {
             };
 
             if input_text.is_empty() {
-                if plain {
-                    eprintln!("No text provided to translate");
-                } else {
-                    eprintln!("{}", "No text provided to translate".red());
-                }
+                eprintln!("{}", "No text provided to translate".red());
                 return Ok(());
             }
 
@@ -105,12 +107,9 @@ async fn main() -> Result<()> {
                     }
                 }
                 Err(e) => {
-                    if plain {
-                        // In plain mode, just exit with error code
-                        std::process::exit(1);
-                    } else {
-                        eprintln!("{} {}", "Translation failed:".red(), e);
-                    }
+                    // In plain mode, output error to stderr without formatting
+                    eprintln!("Translation failed: {}", e);
+                    std::process::exit(1);
                 }
             }
         }
@@ -118,6 +117,8 @@ async fn main() -> Result<()> {
             endpoint,
             api_key,
             model,
+            temperature,
+            max_tokens,
         } => {
             if let Some(endpoint) = endpoint {
                 config.set_endpoint(&endpoint);
@@ -134,12 +135,30 @@ async fn main() -> Result<()> {
                 println!("{}", "API key updated".green());
             }
 
+            if let Some(temperature) = temperature {
+                config.set_temperature(temperature);
+                println!("{} {}", "Temperature set to:".green(), temperature);
+            }
+
+            if let Some(max_tokens) = max_tokens {
+                config.set_max_tokens(Some(max_tokens));
+                println!("{} {}", "Max tokens set to:".green(), max_tokens);
+            }
+
             config.save()?;
         }
         Commands::Status => {
             println!("{}", "Current Configuration:".blue().bold());
             println!("Endpoint: {}", config.endpoint());
             println!("Model: {}", config.model());
+            println!("Temperature: {}", config.temperature());
+            println!(
+                "Max tokens: {}",
+                config
+                    .max_tokens()
+                    .map(|t| t.to_string())
+                    .unwrap_or_else(|| "Unlimited".to_string())
+            );
             println!(
                 "API key: {}",
                 if config.has_api_key() {

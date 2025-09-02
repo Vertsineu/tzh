@@ -98,7 +98,14 @@ impl Translator {
         let messages = vec![
             ChatMessage {
                 role: "system".to_string(),
-                content: "You are a professional translator. Translate the given text accurately while preserving the original meaning and tone. Only return the translated text without any explanations or additional content. If the input contains no valid characters or is empty, return an empty line.".to_string(),
+                content: "You are a professional translator. Follow these rules strictly:
+1. Translate the text accurately while preserving meaning and tone
+2. Output ONLY the translated text, no explanations, notes, or extra content
+3. Do not add punctuation unless it exists in the original
+4. Do not add romanization, pronunciation guides, or parenthetical notes
+5. Do not include quotes around the translation
+6. If input is empty or contains no valid characters, output nothing
+7. Maintain the same formatting and line structure as the original".to_string(),
             },
             ChatMessage {
                 role: "user".to_string(),
@@ -207,7 +214,14 @@ impl Translator {
         let messages = vec![
             ChatMessage {
                 role: "system".to_string(),
-                content: "You are a professional translator and dictionary. When given a single word or phrase, provide the most common translation with brief context if needed. Only return the translation without explanations. If the input contains no valid characters or is empty, return an empty line.".to_string(),
+                content: "You are a professional translator. Rules:
+- Output ONLY the translated word/phrase
+- No pronunciation guides (no pinyin, romanization, or phonetic notation)
+- No parentheses or brackets
+- No explanations or additional text
+- No quotes around translation
+- Single most appropriate translation only
+- For empty input, output nothing".to_string(),
             },
             ChatMessage {
                 role: "user".to_string(),

@@ -21,6 +21,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Translate text
+    #[command(alias = "t")]
     Translate {
         /// Text to translate (multiple words will be joined with spaces). If no text is provided, reads from stdin.
         text: Vec<String>,
@@ -38,6 +39,7 @@ enum Commands {
         stream: bool,
     },
     /// Configure the translator
+    #[command(alias = "c")]
     Config {
         /// Set API endpoint
         #[arg(long)]
@@ -56,6 +58,7 @@ enum Commands {
         max_tokens: Option<i32>,
     },
     /// Show current configuration
+    #[command(alias = "s")]
     Status,
 }
 
@@ -145,8 +148,7 @@ async fn main() -> Result<()> {
                     .translate_word(&input_text, &to, from.as_deref(), callback)
                     .await
                 {
-                    Ok(()) => { /* Nothing to do, because callback has done everything */
-                    }
+                    Ok(()) => { /* Nothing to do, because callback has done everything */ }
                     Err(e) => {
                         eprintln!("Translation failed: {}", e);
                         std::process::exit(1);

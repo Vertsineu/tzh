@@ -33,6 +33,9 @@ enum Commands {
         /// Plain output (only show translation result, no formatting)
         #[arg(short, long)]
         plain: bool,
+        /// Translate line by line for streaming output
+        #[arg(short, long)]
+        stream: bool,
     },
     /// Configure the translator
     Config {
@@ -67,6 +70,7 @@ async fn main() -> Result<()> {
             to,
             from,
             plain,
+            stream,
         } => {
             let translator = Translator::new(&config);
 
@@ -86,28 +90,44 @@ async fn main() -> Result<()> {
                 return Ok(());
             }
 
+            // Split input text into lines if streaming
+            let lines: Vec<&str> = if stream {
+                input_text
+                    .lines()
+                    .map(|line| line.trim())
+                    .collect()
+            } else {
+                vec![input_text.trim()]
+            };
+
+            let callback = |original: &str, translation: &str| {
+                if plain {
+                    // Plain mode: just output the translation
+                    if !translation.is_empty() {
+                        println!("{}", translation);
+                    } else {
+                        println!(); // Empty line
+                    }
+                } else {
+                    println!(); // Add separator between lines
+                    println!("{}", "Original:".green().bold());
+                    println!("{}", original);
+                    println!("{}", format!("Translation ({}):", to).green().bold());
+                    println!("{}", translation.bright_white());
+                }
+            };
+
             if !plain {
                 println!("{}", "Translating...".blue());
             }
 
+            // Translation call
             match translator
-                .translate(&input_text, &to, from.as_deref())
-                .await
+                .translate(lines, &to, from.as_deref(), callback)
+                .await 
             {
-                Ok(result) => {
-                    if plain {
-                        // Plain output: only show the translation result
-                        println!("{}", result);
-                    } else {
-                        // Formatted output: show original and translation with colors
-                        println!("\n{}", "Original:".green().bold());
-                        println!("{}", input_text);
-                        println!("\n{}", format!("Translation ({}):", to).green().bold());
-                        println!("{}", result.bright_white());
-                    }
-                }
+                Ok(()) => { /* Nothing to do, because callback has done everything */ }
                 Err(e) => {
-                    // In plain mode, output error to stderr without formatting
                     eprintln!("Translation failed: {}", e);
                     std::process::exit(1);
                 }

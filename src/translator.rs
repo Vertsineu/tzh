@@ -47,7 +47,31 @@ impl Translator {
         }
     }
 
-    pub async fn translate(
+    pub async fn translate<F>(
+        &self,
+        lines: Vec<&str>,
+        target_lang: &str,
+        source_lang: Option<&str>,
+        mut line_callback: F,
+    ) -> Result<()> 
+    where
+        F: FnMut(&str, &str),
+    {
+        for text in lines {
+            // Skip empty lines
+            if text.is_empty() {
+                line_callback(&text, "");
+                continue;
+            }
+
+            let translation = self.translate_line(text, target_lang, source_lang).await?;
+            line_callback(text, &translation);
+        }
+
+        Ok(())
+    }
+
+    async fn translate_line(
         &self,
         text: &str,
         target_lang: &str,
@@ -57,7 +81,7 @@ impl Translator {
         let mut last_error = None;
 
         for attempt in 1..=max_retries {
-            match self.translate_attempt(text, target_lang, source_lang).await {
+            match self.translate_line_attempt(text, target_lang, source_lang).await {
                 Ok(result) => return Ok(result),
                 Err(e) => {
                     last_error = Some(e);
@@ -71,8 +95,7 @@ impl Translator {
 
         Err(last_error.unwrap())
     }
-
-    async fn translate_attempt(
+    async fn translate_line_attempt(
         &self,
         text: &str,
         target_lang: &str,
@@ -189,19 +212,6 @@ impl Translator {
             "th" => "Thai".to_string(),
             "vi" => "Vietnamese".to_string(),
             _ => code.to_string(), // fallback to the code itself
-        }
-    }
-}
-
-impl Clone for Config {
-    fn clone(&self) -> Self {
-        Config {
-            endpoint: self.endpoint.clone(),
-            api_key: self.api_key.clone(),
-            model: self.model.clone(),
-            timeout: self.timeout,
-            temperature: self.temperature,
-            max_tokens: self.max_tokens,
         }
     }
 }

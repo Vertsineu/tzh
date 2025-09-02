@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use std::io::{self, Read};
+use std::io::{self, BufRead, BufReader, Read, Write};
 
 mod config;
 mod translator;
@@ -37,6 +37,16 @@ enum Commands {
         /// Translate line by line for streaming output
         #[arg(short, long)]
         stream: bool,
+    },
+    /// Interactive translation mode (translate each line as you type)
+    #[command(alias = "i")]
+    Interactive {
+        /// Target language (e.g., zh, en, ja, ko, fr, de, es)
+        #[arg(short, long, default_value = "zh")]
+        to: String,
+        /// Source language (auto-detect if not specified)
+        #[arg(short, long)]
+        from: Option<String>,
     },
     /// Configure the translator
     #[command(alias = "c")]
@@ -154,6 +164,74 @@ async fn main() -> Result<()> {
                         std::process::exit(1);
                     }
                 }
+            }
+        }
+        Commands::Interactive { to, from } => {
+            let translator = Translator::new(&config);
+
+            println!(
+                "{}",
+                "Interactive translation mode (Ctrl+C to exit)"
+                    .blue()
+                    .bold()
+            );
+            println!("{} {}", "Target language:".green(), to);
+            if let Some(ref from_lang) = from {
+                println!("{} {}", "Source language:".green(), from_lang);
+            } else {
+                println!("{}", "Source language: auto-detect".green());
+            }
+            print!("{} ", "tzh>".green().bold());
+            io::stdout().flush().unwrap();
+
+            let stdin = io::stdin();
+            let reader = BufReader::new(stdin);
+
+            for line in reader.lines() {
+                let line = match line {
+                    Ok(line) => line,
+                    Err(e) => {
+                        eprintln!("Error reading input: {}", e);
+                        break;
+                    }
+                };
+
+                let text = line.trim();
+
+                // Skip empty lines
+                if text.is_empty() {
+                    print!("{} ", "tzh>".green().bold());
+                    io::stdout().flush().unwrap();
+                    continue;
+                }
+
+                // Create callback for translation results
+                let callback = |_original: &str, translation: &str| {
+                    if translation.is_empty() {
+                        return;
+                    }
+
+                    println!("{}", translation.bright_white());
+                };
+
+                // Translate the input
+                let result = if has_blank(text) {
+                    translator
+                        .translate_line(text, &to, from.as_deref(), callback)
+                        .await
+                } else {
+                    translator
+                        .translate_word(text, &to, from.as_deref(), callback)
+                        .await
+                };
+
+                if let Err(e) = result {
+                    eprintln!("{} {}", "Translation failed:".red(), e);
+                }
+
+                // Show prompt for next input
+                print!("{} ", "tzh>".green().bold());
+                io::stdout().flush().unwrap();
             }
         }
         Commands::Config {

@@ -4,16 +4,17 @@ An AI-powered translation tool.
 
 This tool is quite simple. It just calls the LLM API to translate text in the command line.
 
-## Usage
+## Installation
 
 - install tzh
 
 ```bash
 git clone https://github.com/Vertsineu/tzh.git
+cd tzh
 cargo install --path .
 ```
 
-## Example
+## Usage
 
 - configure base url, model and api key
 

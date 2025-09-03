@@ -219,7 +219,7 @@ impl Translator {
 - No parentheses or brackets
 - No explanations or additional text
 - No quotes around translation
-- Single most appropriate translation only
+- Output all common and distinct meanings of the word, separated by semicolons or commas
 - For empty input, output nothing".to_string(),
             },
             ChatMessage {
